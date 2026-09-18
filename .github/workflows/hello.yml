@@ -1,20 +1,33 @@
-name: Hello CI          # 工作流名称，显示在 Actions 页面
+name: Node.js CI
 
-on:                     # 触发条件
+on:
   push:
-    branches: [ main ]  # push 到 main 分支时触发
-  workflow_dispatch:    # 允许在网页上手动点击运行
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  say-hello:            # 作业名，随意起
-    runs-on: ubuntu-latest   # 运行环境：最新的 Ubuntu 虚拟机
+  test:
+    runs-on: ubuntu-latest
 
     steps:
-      - name: 打招呼
-        run: echo "Hello from GitHub Actions!"
+      # 步骤1：拉取你的代码到虚拟机上（必做！）
+      - uses: actions/checkout@v4
 
-      - name: 显示环境信息
-        run: |
-          echo "当前时间: $(date)"
-          echo "操作系统: $(uname -a)"
-          echo "Node 版本: $(node --version)"
+      # 步骤2：安装 Node.js 环境（指定版本）
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm        # 自动缓存 node_modules，加速下次构建
+
+      # 步骤3：安装依赖
+      - name: 安装依赖
+        run: npm ci          # npm ci 比 npm install 更适合 CI，可复现性好
+
+      # 步骤4：跑测试
+      - name: 运行测试
+        run: npm test
+
+      # 步骤5：构建（如果有构建步骤的话）
+      - name: 构建项目
+        run: npm run build --if-present
