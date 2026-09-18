@@ -1,0 +1,30 @@
+name: 部署到 GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}   # 运行完显示可点的链接
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 上传页面产物
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./          # 当前目录就是要发布的网站内容
+
+      - name: 部署到 Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
