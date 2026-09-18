@@ -1,0 +1,20 @@
+name: Hello CI          # 工作流名称，显示在 Actions 页面
+
+on:                     # 触发条件
+  push:
+    branches: [ main ]  # push 到 main 分支时触发
+  workflow_dispatch:    # 允许在网页上手动点击运行
+
+jobs:
+  say-hello:            # 作业名，随意起
+    runs-on: ubuntu-latest   # 运行环境：最新的 Ubuntu 虚拟机
+
+    steps:
+      - name: 打招呼
+        run: echo "Hello from GitHub Actions!"
+
+      - name: 显示环境信息
+        run: |
+          echo "当前时间: $(date)"
+          echo "操作系统: $(uname -a)"
+          echo "Node 版本: $(node --version)"
