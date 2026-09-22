@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "sealId": "seal_a4e0a99e-d058-45e7-badc-50719cb23e60",
+  "parentHead": "9d269e51bb6ac410a69e1b6362a2a714c168a1fe",
+  "taskId": "t001",
+  "taskStatus": "completed",
+  "stateRevision": 7,
+  "attemptId": "3a7ab444-cce9-4f69-8baf-5449eb1d2bc0",
+  "fencingToken": 1,
+  "candidateDigest": "27dc46abad030845b060c7b500bfaefb0b8fb21dcc714a619e595148b847bd70",
+  "receiptDigest": "97493190ce06bed1f0f681b4225fe4b87087c4f41ddf77ae6b472e3220ec6b8f",
+  "paths": [
+    ".rootagent/TASK.md",
+    ".rootagent/audit/seals/seal_a4e0a99e-d058-45e7-badc-50719cb23e60.json",
+    ".rootagent/receipts/t001-27dc46abad03.json",
+    ".rootagent/rounds.jsonl",
+    ".rootagent/tasks.json",
+    ".rootagent/workflows/chat-development/cd7c737d158e2968fc2540fd274c2466354ed8e5302569b80eda0bed2bdfa4f0.json",
+    ".rootagent/workflows/chat-development/latest.json"
+  ],
+  "createdAt": "2026-09-22T08:44:50.104Z",
+  "digest": "3c318e253b1227b2b2a2b3e90785b600d922eb51c0318d2b9b4d3b9c3f5ae305"
+}
