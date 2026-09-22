@@ -107,14 +107,11 @@
   "edges": [
     {
       "from": "maker",
-      "to": "checker",
-      "id": "e001"
+      "to": "checker"
     },
     {
       "from": "checker",
-      "to": "stop",
-      "id": "e002"
+      "to": "stop"
     }
-  ],
-  "digest": "cd7c737d158e2968fc2540fd274c2466354ed8e5302569b80eda0bed2bdfa4f0"
+  ]
 }

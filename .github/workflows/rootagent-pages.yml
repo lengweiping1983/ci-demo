@@ -1,0 +1,85 @@
+name: RootAgent Genesis + Pages
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+    paths-ignore:
+      - '.rootagent/**'
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: rootagent-pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    outputs:
+      should_deploy: ${{ steps.mode.outputs.should_deploy }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Product checks
+        run: npm test
+
+      - id: mode
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "should_deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_deploy=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run real RootAgent lifecycle
+        if: github.event_name == 'push'
+        env:
+          ROOTAGENT_WORKER_ID: chatgpt-maker
+        run: node scripts/rootagent-ci.mjs
+
+      - name: Persist RootAgent receipts and audit state
+        if: github.event_name == 'push'
+        run: |
+          git config user.name "rootagent-ci"
+          git config user.email "rootagent-ci@users.noreply.github.com"
+          git add .rootagent
+          git diff --cached --quiet || git commit -m "audit: persist RootAgent Genesis receipt [skip ci]"
+          git push origin HEAD:main
+
+      - name: Prepare static Pages artifact
+        if: github.event_name == 'push'
+        run: |
+          rm -rf _site
+          mkdir _site
+          cp index.html styles.css game.js _site/
+          printf '' > _site/.nojekyll
+
+      - uses: actions/configure-pages@v5
+        if: github.event_name == 'push'
+
+      - uses: actions/upload-pages-artifact@v3
+        if: github.event_name == 'push'
+        with:
+          path: _site
+
+  deploy:
+    if: github.event_name == 'push' && needs.verify.outputs.should_deploy == 'true'
+    needs: verify
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
