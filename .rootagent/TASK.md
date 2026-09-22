@@ -1,20 +1,17 @@
-# TASK — JEV 3D Arena
+### JEV 3D 战术竞技场
+描述：交付一个完整可玩的 3D 浏览器战斗切片。玩家通过 WASD 移动、Space/鼠标射击、Shift 闪避；敌人战术由 JEV 的有限 Choice 决策驱动，并在 JEV 网络/Key 不可用时平滑降级到本地策略。产品必须具备真实 WebGL 渲染、Web Audio、粒子反馈、生命值、得分、波次、死亡与重新开始，同时安全隔离 JEV Key。
+写目标：index.html, game.js, server.mjs, package.json, README.md, tests/smoke.mjs, .github/workflows/pages.yml
+依赖：
+审批：否
 
-## Description
-使用 RootAgent 开发并验证一个可部署到 GitHub Pages 的 3D 游戏。敌方战术由 JEV 在固定候选动作中决策；JEV 不可用时必须自动降级到本地策略。API Key 不得写入静态站点或 Git 历史。
+验收标准：
+- [工程] node --check game.js、node --check server.mjs 与 node tests/smoke.mjs 全部退出码为 0
+- [体验] 玩家使用 WASD 移动、Space 或鼠标射击、Shift 闪避后，角色状态与 HUD 都产生即时可观察反馈
+- [功能] JEV 决策只允许从 CHASE、STRAFE、RETREAT、ATTACK、GUARD 中选择并实际改变敌人战术；JEV 不可用时本地 fallback 仍保持游戏可玩
+- [安全] JEV API Key 只允许从服务端环境变量或当前浏览器会话内存读取，仓库和前端静态源码不得包含真实 Key
+- [体验] 玩家能够完成战斗波次、获得得分结果，生命值归零后可以重新开始新一局
 
-## Acceptance Criteria
-- 使用真实 WebGL / Three.js 3D 渲染，不使用 Canvas2D 假 3D。
-- WASD 移动、鼠标瞄准、点击或 Space 射击、Shift 闪避均有实际反馈。
-- 敌方战术候选至少包含 CHASE / STRAFE / RETREAT / ATTACK / GUARD。
-- JEV 网络调用失败、超时、CORS 或未配置 Key 时游戏仍可继续。
-- 包含生命值、得分、波次、死亡与重新开始闭环。
-- 包含 Web Audio 打击/射击反馈、动态光源、粒子效果。
-- 暴露 `window.__ROOTAGENT_PLAYTEST__.observe()` 供 RootAgent Headless 试玩读取状态。
-- 仓库中不得出现任何 `apikey_*` 明文。
-- GitHub Pages 部署成功且页面可直接打开。
-
-## Validation Commands
-- `node tests/smoke.mjs`
-- RootAgent `auditProjectExperience(cwd, '使用 JEV 决策的 3D 游戏程序')`
-- GitHub Pages deployment workflow
+验证命令：
+- [L1] node --check game.js
+- [L1] node --check server.mjs
+- [L2] node tests/smoke.mjs

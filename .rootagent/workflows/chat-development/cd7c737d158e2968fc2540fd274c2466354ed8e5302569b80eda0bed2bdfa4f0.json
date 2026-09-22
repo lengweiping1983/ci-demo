@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "workflowId": "chat-development",
+  "version": 1,
+  "start": "maker",
+  "nodes": [
+    {
+      "id": "maker",
+      "type": "agent",
+      "inputSchema": {
+        "type": "object"
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "done"
+        ],
+        "properties": {
+          "done": {
+            "type": "boolean"
+          },
+          "productCommit": {
+            "type": "string"
+          }
+        }
+      },
+      "config": {
+        "role": "maker",
+        "contextRole": "maker",
+        "requiresFreshContext": true,
+        "allowedActions": [
+          "edit-product",
+          "commit-product"
+        ],
+        "prompt": "Load this frozen Maker ContextPacket. Implement only this task, run its validation commands, commit product changes, and return done=true only when implementation is complete. The supervising chat must run RootAgent validate before submitting this response. Never pass or approve your own work.",
+        "executionRequirements": {
+          "freshContext": true,
+          "independentContext": "preferred",
+          "physicalAgentIsolation": "preferred",
+          "workspaceIsolation": "none",
+          "rootAgentIsolation": "SERIAL_REQUIRED",
+          "parallelSafe": false,
+          "maxConcurrency": 1,
+          "requiredCapabilities": {
+            "commandExecution": true,
+            "filesystemRead": true,
+            "filesystemWrite": true,
+            "git": true
+          }
+        }
+      }
+    },
+    {
+      "id": "checker",
+      "type": "checker",
+      "inputSchema": {
+        "type": "object"
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "verdict"
+        ],
+        "properties": {
+          "verdict": {
+            "type": "string"
+          }
+        }
+      },
+      "config": {
+        "role": "checker",
+        "contextRole": "checker",
+        "requiresFreshContext": true,
+        "allowedActions": [
+          "verify",
+          "produce-checker-report"
+        ],
+        "prompt": "Load this Checker ContextPacket and inspect the frozen Candidate. Re-run every acceptance check without editing product code. Prepare a structured Checker report bound to taskId, contractDigest and candidateDigest, with per-criterion verdict/evidence/confidence/limitations. Explicitly record that this is the same chat session with no independent context or physical isolation. Return PASS only if every criterion was actually verified; otherwise FAIL. Never issue receipts or approve your own work.",
+        "requirePass": true,
+        "executionRequirements": {
+          "freshContext": true,
+          "independentContext": "preferred",
+          "physicalAgentIsolation": "preferred",
+          "workspaceIsolation": "none",
+          "rootAgentIsolation": "SERIAL_REQUIRED",
+          "parallelSafe": false,
+          "maxConcurrency": 1,
+          "requiredCapabilities": {
+            "commandExecution": true,
+            "filesystemRead": true,
+            "git": true
+          }
+        }
+      }
+    },
+    {
+      "id": "stop",
+      "type": "stop",
+      "inputSchema": {
+        "type": "object"
+      },
+      "outputSchema": {
+        "type": "object"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "maker",
+      "to": "checker",
+      "id": "e001"
+    },
+    {
+      "from": "checker",
+      "to": "stop",
+      "id": "e002"
+    }
+  ],
+  "digest": "cd7c737d158e2968fc2540fd274c2466354ed8e5302569b80eda0bed2bdfa4f0"
+}
