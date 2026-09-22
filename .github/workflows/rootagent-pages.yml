@@ -31,6 +31,11 @@ jobs:
         with:
           node-version: 22
 
+      - name: Configure Git identity for RootAgent receipts
+        run: |
+          git config user.name "rootagent-ci"
+          git config user.email "rootagent-ci@users.noreply.github.com"
+
       - name: Product checks
         run: npm test
 
@@ -51,8 +56,6 @@ jobs:
       - name: Persist RootAgent receipts and audit state
         if: github.event_name == 'push'
         run: |
-          git config user.name "rootagent-ci"
-          git config user.email "rootagent-ci@users.noreply.github.com"
           git add .rootagent
           git diff --cached --quiet || git commit -m "audit: persist RootAgent Genesis receipt [skip ci]"
           git push origin HEAD:main
