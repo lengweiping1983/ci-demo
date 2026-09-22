@@ -716,15 +716,27 @@ async function runHeadlessChromeProbeOnce(cwd, options = {}) {
     await new Promise((resolve) => {
       ws = new WebSocket(wsUrl);
       const effectiveTimeoutMs = options.feelProbe
-        ? Math.max(timeoutMs, 9000)
+        ? Math.max(timeoutMs, 15000)
         : options.playtest
-          ? Math.max(timeoutMs, 6000)
+          ? Math.max(timeoutMs, 12000)
           : Math.max(timeoutMs, process.platform === 'linux' ? 4000 : timeoutMs);
       const pending = new Map();
       let nextCdpId = 100;
       let playtestStarted = false;
-      const timer = setTimeout(() => {
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
         resolve();
+      };
+      const timer = setTimeout(() => {
+        if (options.playtest && !playtestStarted) {
+          capturedWarnings.push('[PLAYTEST_START_TIMEOUT] Page did not become ready before the bounded startup deadline');
+        } else if (options.playtest && playtestTrace?.pending) {
+          capturedWarnings.push('[PLAYTEST_COMPLETION_TIMEOUT] Scenario playtest did not finish before the bounded runtime deadline');
+        }
+        finish();
       }, effectiveTimeoutMs);
 
       const sendCdp = (method, params = {}) => new Promise((resolveRequest, rejectRequest) => {
@@ -754,6 +766,8 @@ async function runHeadlessChromeProbeOnce(cwd, options = {}) {
               error: error.message,
             };
             capturedWarnings.push(`[JEV 有界试玩未完成] ${error.message}`);
+          } finally {
+            finish();
           }
         }, 120);
       };
@@ -788,7 +802,7 @@ async function runHeadlessChromeProbeOnce(cwd, options = {}) {
           if (options.playtest) setTimeout(startPlaytest, 350);
         } catch (error) {
           capturedErrors.push(`[CDP 初始化失败] ${error.message}`);
-          resolve();
+          finish();
         }
       };
 
@@ -835,7 +849,7 @@ async function runHeadlessChromeProbeOnce(cwd, options = {}) {
         } catch {}
       };
 
-      ws.onerror = () => resolve();
+      ws.onerror = () => finish();
     });
   } catch (err) {
     capturedErrors.push(`[无头浏览器运行探测发生异常] ${err.message}`);
