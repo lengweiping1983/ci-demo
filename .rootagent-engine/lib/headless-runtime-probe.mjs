@@ -179,12 +179,14 @@ async function runContinuousGameFeelScenario(sendCdp) {
   await startFrameSampler(sendCdp);
   const movementAction = { key: 'w', code: 'KeyW', keyCode: 87 };
   const movementParams = keyParams(movementAction);
-  const movementStart = Date.now();
   let movementResponseMs = null;
   let lastMovement = initial;
   const movementSamples = [];
 
   await sendCdp('Input.dispatchKeyEvent', { type: 'keyDown', ...movementParams });
+  // Measure product response after Chrome confirms the input event was dispatched.
+  // CDP transport/runner latency is infrastructure overhead, not game feel.
+  const movementStart = Date.now();
   for (let i = 0; i < 14; i++) {
     await new Promise(resolve => setTimeout(resolve, 25));
     const observed = await observePlaytestState(sendCdp);
@@ -208,11 +210,11 @@ async function runContinuousGameFeelScenario(sendCdp) {
   const attackStartState = feelState(await observePlaytestState(sendCdp)) || stoppedState;
   const attackStartCount = attackStartState?.attackCount ?? 0;
   const attackParams = keyParams({ key: ' ', code: 'Space', keyCode: 32 });
-  const attackStart = Date.now();
   let attackResponseMs = null;
   await sendCdp('Input.dispatchKeyEvent', { type: 'keyDown', ...attackParams });
-  await new Promise(resolve => setTimeout(resolve, 35));
-  await sendCdp('Input.dispatchKeyEvent', { type: 'keyUp', ...attackParams });
+  // Start the product-response clock only after keyDown dispatch has completed.
+  // Observe attack feedback before keyUp so CDP release latency cannot inflate the metric.
+  const attackStart = Date.now();
   for (let i = 0; i < 12; i++) {
     await new Promise(resolve => setTimeout(resolve, 25));
     const feel = feelState(await observePlaytestState(sendCdp));
@@ -221,6 +223,7 @@ async function runContinuousGameFeelScenario(sendCdp) {
       break;
     }
   }
+  await sendCdp('Input.dispatchKeyEvent', { type: 'keyUp', ...attackParams });
 
   const frameTimesMs = await stopFrameSampler(sendCdp);
   return {
