@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "sealId": "seal_a8c82ad2-9257-4a05-a526-1ddc5d4a867c",
+  "parentHead": "43a7e11fdf65d0a7b38578aa99357ce64ca4b87b",
+  "taskId": "t001",
+  "taskStatus": "completed",
+  "stateRevision": 6,
+  "attemptId": "e99c523a-73a0-4686-adf6-ce320efdaa57",
+  "fencingToken": 1,
+  "candidateDigest": "a3c3beec9382bea3aba902b42b531752b83614b54c04d229e89e39ce07a84238",
+  "receiptDigest": "ce8efacc894240052f9a2d3709235540a467848ccadc81a5b9b313a8409d2f8a",
+  "paths": [
+    ".rootagent/audit/seals/seal_a8c82ad2-9257-4a05-a526-1ddc5d4a867c.json",
+    ".rootagent/receipts/t001-a3c3beec9382.json",
+    ".rootagent/rounds.jsonl",
+    ".rootagent/tasks.json"
+  ],
+  "createdAt": "2026-09-22T23:00:33.989Z",
+  "digest": "794ca70a958de3bda0b7429337f55b7b87c147659048b2d45e86864c7454f8b5"
+}
