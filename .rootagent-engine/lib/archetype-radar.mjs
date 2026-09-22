@@ -80,6 +80,10 @@ export const ARCHETYPES = {
 
       const playtest = headlessRes.details?.runtime?.playtest || null;
       const steps = Array.isArray(playtest?.steps) ? playtest.steps : [];
+      const playtestIncomplete = playtest?.pending === true;
+      if (headlessRes.ok && playtestIncomplete) {
+        violations.push('[PLAYTEST_COMPLETION_TIMEOUT] Scenario playtest exceeded its bounded runtime budget before producing complete evidence.');
+      }
       const firstObservedState = steps[0]?.observedBefore || steps[0]?.observedAfter || null;
       if (headlessRes.ok && steps.length && !validateJourneyObservation(firstObservedState)) {
         violations.push('缺少有效 observe().journey={id,status,progress,milestone} 核心旅程状态，RootAgent 无法验证真实操作是否推进用户目标。');
@@ -91,13 +95,13 @@ export const ARCHETYPES = {
         violations.push('缺少有效 observe().feel={playerPosition,cameraPosition,attackCount} 连续手感遥测，RootAgent 无法验证输入延迟、相机跟随与帧时间稳定性。');
       }
 
-      const interactionFindings = headlessRes.ok
+      const interactionFindings = headlessRes.ok && !playtestIncomplete
         ? buildProductQualityFindings(playtest)
         : [];
-      const journeyFindings = headlessRes.ok
+      const journeyFindings = headlessRes.ok && !playtestIncomplete
         ? buildUserJourneyFindings(playtest)
         : [];
-      const outcomeFindings = headlessRes.ok
+      const outcomeFindings = headlessRes.ok && !playtestIncomplete
         ? buildUserOutcomeFindings(playtest)
         : [];
       const latestValidOutcome = [...steps]
@@ -106,10 +110,10 @@ export const ARCHETYPES = {
         .map(state => validateOutcomeObservation(state))
         .find(Boolean) || validateOutcomeObservation(firstObservedState);
       const boundOutcome = latestValidOutcome;
-      const contractFindings = headlessRes.ok && context.outcomeContract?.criteria?.length
+      const contractFindings = headlessRes.ok && !playtestIncomplete && steps.length && context.outcomeContract?.criteria?.length
         ? buildOutcomeContractFindings(boundOutcome, context.outcomeContract)
         : [];
-      const feelFindings = headlessRes.ok
+      const feelFindings = headlessRes.ok && !playtestIncomplete
         ? buildGameFeelFindings(playtest?.feelScenario)
         : [];
       const qualityFindings = [...feelFindings, ...contractFindings, ...outcomeFindings, ...journeyFindings, ...interactionFindings];
