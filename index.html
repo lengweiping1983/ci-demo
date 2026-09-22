@@ -1,1 +1,68 @@
-<h1>Hello CDby GitHub Actions</p>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>JEV // Neon Arena</title>
+  <meta name="description" content="RootAgent 开发的 JEV 决策 3D 竞技场游戏" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div id="game"></div>
+
+  <div class="hud">
+    <div class="brand">
+      <div class="eyebrow">ROOTAGENT PLAYABLE SLICE</div>
+      <div class="title">JEV // NEON ARENA</div>
+    </div>
+
+    <div class="stats">
+      <div><span>HP</span><strong id="hp">100</strong></div>
+      <div><span>WAVE</span><strong id="wave">1</strong></div>
+      <div><span>SCORE</span><strong id="score">0000</strong></div>
+    </div>
+
+    <div class="ai-panel">
+      <div class="ai-row">
+        <span class="dot" id="aiDot"></span>
+        <strong id="aiMode">LOCAL FALLBACK</strong>
+      </div>
+      <div class="decision" id="decision">TACTIC: CHASE</div>
+      <div class="confidence" id="confidence">confidence —</div>
+    </div>
+
+    <div class="crosshair" aria-hidden="true"></div>
+    <div class="tips">WASD 移动 · 鼠标瞄准 · 点击 / Space 射击 · Shift 闪避</div>
+  </div>
+
+  <section class="start-card" id="startCard">
+    <div class="chip">3D · JEV DECISION · ROOTAGENT VALIDATED</div>
+    <h1>让敌人<br><em>自己决定怎么围猎你</em></h1>
+    <p>
+      敌方战术指挥器会在 <b>CHASE / FLANK / RETREAT / ATTACK / GUARD</b>
+      中做受约束决策。可选填写 JEV API Key 启用在线决策；不填写也可直接玩，
+      游戏会自动使用本地策略作为安全降级。
+    </p>
+
+    <label for="jevKey">JEV API Key（仅保存在当前页面内存，不写入仓库或本地存储）</label>
+    <input id="jevKey" type="password" autocomplete="off" placeholder="可留空，直接使用本地 fallback" />
+    <div class="start-actions">
+      <button id="startBtn">开始战斗</button>
+      <button class="secondary" id="startFallbackBtn">不使用 Key，直接试玩</button>
+    </div>
+
+    <div class="privacy-note">
+      GitHub Pages 是静态站点，本页不会硬编码任何 API Key。浏览器直连 JEV 若被网络/CORS 阻断，会自动切回本地策略。
+    </div>
+  </section>
+
+  <section class="game-over hidden" id="gameOver">
+    <div class="eyebrow">RUN TERMINATED</div>
+    <h2>信号熄灭</h2>
+    <p>最终得分 <strong id="finalScore">0</strong></p>
+    <button id="restartBtn">重新接入</button>
+  </section>
+
+  <script type="module" src="./game.js"></script>
+</body>
+</html>
