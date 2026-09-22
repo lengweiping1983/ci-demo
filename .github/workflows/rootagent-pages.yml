@@ -65,7 +65,7 @@ jobs:
         run: |
           rm -rf _site
           mkdir _site
-          cp index.html styles.css game.js runtime-config.js _site/
+          cp index.html styles.css game.js _site/
           printf '' > _site/.nojekyll
 
       - uses: actions/configure-pages@v5
