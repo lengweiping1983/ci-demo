@@ -5,7 +5,6 @@ const game = fs.readFileSync('game.js','utf8');
 const html = fs.readFileSync('index.html','utf8');
 const css = fs.readFileSync('styles.css','utf8');
 const server = fs.readFileSync('server.mjs','utf8');
-const runtimeConfig = fs.readFileSync('runtime-config.js','utf8');
 
 assert.match(game,/new THREE\.WebGLRenderer/,'real WebGL renderer required');
 assert.match(game,/__ROOTAGENT_PLAYTEST__/,'RootAgent runtime hook required');
@@ -18,8 +17,7 @@ assert.match(server,/authorization:'Bearer '\+key/,'server-side bearer forwardin
 assert.match(server,/UNBOUNDED_TACTICS/,'server must reject unbounded tactic sets');
 assert.match(game,/state\.sessionKey/,'Pages session-only credential path required');
 assert.match(game,/URLSearchParams\(location\.search\).*jev_proxy/,'local proxy must require an explicit URL capability flag');
-assert.match(server,/runtime-config\.js/,'local server must explicitly enable proxy mode');
-assert.match(runtimeConfig,/__AEGIS_LOCAL_PROXY__ = false/,'static Pages must disable local proxy mode');
+assert.match(server,/index\.html\?jev_proxy=1/,'local server must explicitly opt local sessions into proxy mode');
 assert.doesNotMatch(game,/localStorage|sessionStorage/,'credential must not persist in browser storage');
 assert.doesNotMatch(game,/apikey_[A-Za-z0-9_]+/,'real key must not be embedded');
 assert.doesNotMatch(html,/apikey_[A-Za-z0-9_]+/,'real key must not be embedded in HTML');
