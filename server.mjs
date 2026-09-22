@@ -21,10 +21,6 @@ function send(res,status,body,type='application/json; charset=utf-8'){
 
 const server = http.createServer(async (req,res)=>{
   const url = new URL(req.url || '/', 'http://localhost');
-  if (req.method === 'GET' && url.pathname === '/runtime-config.js') {
-    return send(res,200,'globalThis.__AEGIS_LOCAL_PROXY__ = true;\n','application/javascript; charset=utf-8');
-  }
-
   if (req.method === 'POST' && url.pathname === '/api/jev') {
     const key = apiKey();
     if (!key) return send(res,503,{error:'JEV_NOT_CONFIGURED'});
@@ -56,8 +52,13 @@ const server = http.createServer(async (req,res)=>{
     return;
   }
 
+  if (req.method === 'GET' && url.pathname === '/') {
+    res.writeHead(302, { location: '/index.html?jev_proxy=1' });
+    res.end();
+    return;
+  }
+
   let rel = decodeURIComponent(url.pathname);
-  if (rel === '/') rel = '/index.html';
   const file = path.resolve(root, '.'+rel);
   if (!file.startsWith(root + path.sep) || !fs.existsSync(file) || !fs.statSync(file).isFile()) return send(res,404,'Not found','text/plain; charset=utf-8');
   const ext=path.extname(file).toLowerCase();

@@ -284,7 +284,7 @@ async function fetchJev(body) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 1200);
   try {
-    if (globalThis.__AEGIS_LOCAL_PROXY__ === true) {
+    if (new URLSearchParams(location.search).get('jev_proxy') === '1') {
       const r = await fetch('/api/jev', { method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(body), signal:controller.signal });
       if (!r.ok) throw new Error('proxy ' + r.status);
       return await r.json();
