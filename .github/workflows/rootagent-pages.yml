@@ -47,14 +47,23 @@ jobs:
             echo "should_deploy=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Run real RootAgent lifecycle
+      - id: rootagent_state
         if: github.event_name == 'push'
+        run: |
+          if compgen -G ".rootagent/audit/seals/*.json" > /dev/null && compgen -G ".rootagent/receipts/*.json" > /dev/null; then
+            echo "needs_run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "needs_run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run real RootAgent lifecycle
+        if: github.event_name == 'push' && steps.rootagent_state.outputs.needs_run == 'true'
         env:
           ROOTAGENT_WORKER_ID: chatgpt-maker
         run: node scripts/rootagent-ci.mjs
 
       - name: Persist RootAgent receipts and audit state
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && steps.rootagent_state.outputs.needs_run == 'true'
         run: |
           git add .rootagent
           git diff --cached --quiet || git commit -m "audit: persist RootAgent Genesis receipt [skip ci]"
