@@ -284,7 +284,7 @@ async function fetchJev(body) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 1200);
   try {
-    if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+    if (globalThis.__AEGIS_LOCAL_PROXY__ === true) {
       const r = await fetch('/api/jev', { method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(body), signal:controller.signal });
       if (!r.ok) throw new Error('proxy ' + r.status);
       return await r.json();
