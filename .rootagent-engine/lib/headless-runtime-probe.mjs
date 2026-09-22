@@ -748,11 +748,14 @@ async function runHeadlessChromeProbeOnce(cwd, options = {}) {
     // 4. 通过 WebSocket 接入 CDP 事件监听
     await new Promise((resolve) => {
       ws = new WebSocket(wsUrl);
-      const effectiveTimeoutMs = options.feelProbe
-        ? Math.max(timeoutMs, 15000)
-        : options.playtest
-          ? Math.max(timeoutMs, 12000)
-          : Math.max(timeoutMs, process.platform === 'linux' ? 4000 : timeoutMs);
+      const requestedPlaytestSteps = Number(options.playtestSteps ?? process.env.ROOTAGENT_JEV_PLAYTEST_STEPS ?? 1);
+      const boundedPlaytestSteps = Number.isInteger(requestedPlaytestSteps)
+        ? Math.max(1, Math.min(requestedPlaytestSteps, 12))
+        : 1;
+      const playtestBudgetMs = Math.min(33000, 9000 + boundedPlaytestSteps * 2000);
+      const effectiveTimeoutMs = options.playtest
+        ? Math.max(timeoutMs, playtestBudgetMs)
+        : Math.max(timeoutMs, process.platform === 'linux' ? 4000 : timeoutMs);
       const pending = new Map();
       let nextCdpId = 100;
       let playtestStarted = false;
