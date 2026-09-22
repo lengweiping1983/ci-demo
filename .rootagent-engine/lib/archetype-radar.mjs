@@ -100,8 +100,12 @@ export const ARCHETYPES = {
       const outcomeFindings = headlessRes.ok
         ? buildUserOutcomeFindings(playtest)
         : [];
-      const lastObservedState = [...steps].reverse().map(step => step?.observedAfter || step?.observedBefore).find(Boolean) || firstObservedState;
-      const boundOutcome = validateOutcomeObservation(lastObservedState);
+      const latestValidOutcome = [...steps]
+        .reverse()
+        .flatMap(step => [step?.observedAfter, step?.observedBefore])
+        .map(state => validateOutcomeObservation(state))
+        .find(Boolean) || validateOutcomeObservation(firstObservedState);
+      const boundOutcome = latestValidOutcome;
       const contractFindings = headlessRes.ok && context.outcomeContract?.criteria?.length
         ? buildOutcomeContractFindings(boundOutcome, context.outcomeContract)
         : [];
