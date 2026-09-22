@@ -17,7 +17,7 @@ assert.match(game,/https:\/\/api\.typesafe\.ai\/v1\/systemone/,'JEV endpoint req
 assert.match(server,/authorization:'Bearer '\+key/,'server-side bearer forwarding required');
 assert.match(server,/UNBOUNDED_TACTICS/,'server must reject unbounded tactic sets');
 assert.match(game,/state\.sessionKey/,'Pages session-only credential path required');
-assert.match(game,/__AEGIS_LOCAL_PROXY__ === true/,'local proxy must require an explicit runtime marker');
+assert.match(game,/URLSearchParams\(location\.search\).*jev_proxy/,'local proxy must require an explicit URL capability flag');
 assert.match(server,/runtime-config\.js/,'local server must explicitly enable proxy mode');
 assert.match(runtimeConfig,/__AEGIS_LOCAL_PROXY__ = false/,'static Pages must disable local proxy mode');
 assert.doesNotMatch(game,/localStorage|sessionStorage/,'credential must not persist in browser storage');
