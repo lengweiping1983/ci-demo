@@ -21,6 +21,10 @@ function send(res,status,body,type='application/json; charset=utf-8'){
 
 const server = http.createServer(async (req,res)=>{
   const url = new URL(req.url || '/', 'http://localhost');
+  if (req.method === 'GET' && url.pathname === '/runtime-config.js') {
+    return send(res,200,'globalThis.__AEGIS_LOCAL_PROXY__ = true;\n','application/javascript; charset=utf-8');
+  }
+
   if (req.method === 'POST' && url.pathname === '/api/jev') {
     const key = apiKey();
     if (!key) return send(res,503,{error:'JEV_NOT_CONFIGURED'});
