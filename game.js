@@ -19,7 +19,7 @@ const camera = new THREE.PerspectiveCamera(62, innerWidth / innerHeight, 0.1, 22
 camera.position.set(0, 11, 14);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 1.6));
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.25));
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -33,7 +33,7 @@ scene.add(hemi);
 const keyLight = new THREE.DirectionalLight(0x9ec9ff, 3.1);
 keyLight.position.set(7, 13, 5);
 keyLight.castShadow = true;
-keyLight.shadow.mapSize.set(1024, 1024);
+keyLight.shadow.mapSize.set(512, 512);
 scene.add(keyLight);
 const rim = new THREE.PointLight(0x5df6ff, 22, 42, 2);
 rim.position.set(0, 5, 0);
@@ -51,7 +51,7 @@ arena.add(floor);
 
 const ringMat = new THREE.MeshBasicMaterial({ color: 0x1bc8ff, transparent: true, opacity: 0.28 });
 for (const radius of [6, 12, 18, 24]) {
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(radius, 0.035, 8, 160), ringMat);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(radius, 0.035, 8, 96), ringMat);
   ring.rotation.x = Math.PI / 2;
   ring.position.y = -0.16;
   arena.add(ring);
@@ -87,7 +87,7 @@ core.add(coreHalo);
 scene.add(core);
 
 const starGeo = new THREE.BufferGeometry();
-const starCount = 900;
+const starCount = 520;
 const positions = new Float32Array(starCount * 3);
 for (let i = 0; i < starCount; i++) {
   const r = 35 + Math.random() * 65;
@@ -207,10 +207,14 @@ function clampArena(object, radius = 22) {
 function fire() {
   if (state.gameOver) return;
   const now = performance.now();
-  if (now - state.lastShotAt < 90) return;
-  state.lastShotAt = now;
   state.attackCount++;
   state.stateVersion++;
+  if (now - state.lastShotAt < 70) {
+    const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(player.quaternion).normalize();
+    addSpark(player.position.clone().addScaledVector(dir, 0.9), 0x71efff, 2);
+    return;
+  }
+  state.lastShotAt = now;
   const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(player.quaternion).normalize();
   const orb = new THREE.Mesh(
     new THREE.SphereGeometry(0.11, 8, 8),
@@ -563,7 +567,17 @@ window.__ROOTAGENT_PLAYTEST__ = {
 };
 
 addEventListener('keydown', e => {
+  const wasDown = keys.has(e.code);
   keys.add(e.code);
+  if (!wasDown && ['KeyW','KeyA','KeyS','KeyD'].includes(e.code) && !state.gameOver) {
+    const impulse = new THREE.Vector3(
+      e.code === 'KeyD' ? 1 : e.code === 'KeyA' ? -1 : 0,
+      0,
+      e.code === 'KeyS' ? 1 : e.code === 'KeyW' ? -1 : 0
+    ).normalize();
+    velocity.addScaledVector(impulse, 2.25);
+    state.stateVersion++;
+  }
   if (e.code === 'Space') { e.preventDefault(); fire(); }
   if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') dodge();
   if (e.code === 'KeyR' && state.gameOver) restartGame();
