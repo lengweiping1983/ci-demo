@@ -132,6 +132,43 @@ function distance2(a, b) {
   return Math.hypot(Number(a.x) - Number(b.x), Number(a.z) - Number(b.z));
 }
 
+function startBrowserFeelResponseProbe(sendCdp, { kind, baseline, timeoutMs = 700 }) {
+  const safeTimeout = Math.max(100, Math.min(Number(timeoutMs) || 700, 1500));
+  const baselineJson = JSON.stringify(baseline || {});
+  const kindJson = JSON.stringify(kind);
+  const expression = `(() => new Promise(resolve => {
+    const startedAt = performance.now();
+    const baseline = ${baselineJson};
+    const timeoutMs = ${safeTimeout};
+    const kind = ${kindJson};
+    const sample = () => {
+      let feel = null;
+      try { feel = globalThis.__ROOTAGENT_PLAYTEST__?.observe?.()?.feel || null; } catch {}
+      let changed = false;
+      if (feel && kind === 'movement') {
+        const p = feel.playerPosition;
+        if (p && Number.isFinite(Number(p.x)) && Number.isFinite(Number(p.z))) {
+          changed = Math.hypot(Number(p.x) - Number(baseline.x), Number(p.z) - Number(baseline.z)) > 0.005;
+        }
+      } else if (feel && kind === 'attack') {
+        changed = Number(feel.attackCount) > Number(baseline.attackCount || 0);
+      }
+      if (changed) return resolve(performance.now() - startedAt);
+      if (performance.now() - startedAt >= timeoutMs) return resolve(null);
+      requestAnimationFrame(sample);
+    };
+    requestAnimationFrame(sample);
+  }))()`;
+  return sendCdp('Runtime.evaluate', {
+    expression,
+    awaitPromise: true,
+    returnByValue: true,
+  }).then(result => {
+    const value = result?.result?.value;
+    return Number.isFinite(Number(value)) ? Number(value) : null;
+  }).catch(() => null);
+}
+
 async function startFrameSampler(sendCdp) {
   await sendCdp('Runtime.evaluate', {
     expression: `(() => {
@@ -179,25 +216,24 @@ async function runContinuousGameFeelScenario(sendCdp) {
   await startFrameSampler(sendCdp);
   const movementAction = { key: 'w', code: 'KeyW', keyCode: 87 };
   const movementParams = keyParams(movementAction);
-  let movementResponseMs = null;
   let lastMovement = initial;
   const movementSamples = [];
+  const movementProbe = startBrowserFeelResponseProbe(sendCdp, {
+    kind: 'movement',
+    baseline: initial.playerPosition,
+  });
 
   await sendCdp('Input.dispatchKeyEvent', { type: 'keyDown', ...movementParams });
-  // Measure product response after Chrome confirms the input event was dispatched.
-  // CDP transport/runner latency is infrastructure overhead, not game feel.
-  const movementStart = Date.now();
+  const movementSampleStart = Date.now();
   for (let i = 0; i < 14; i++) {
     await new Promise(resolve => setTimeout(resolve, 25));
     const observed = await observePlaytestState(sendCdp);
     const feel = feelState(observed);
     if (!feel) continue;
-    movementSamples.push({ atMs: Date.now() - movementStart, ...feel });
+    movementSamples.push({ atMs: Date.now() - movementSampleStart, ...feel });
     lastMovement = feel;
-    if (movementResponseMs == null && distance2(initial.playerPosition, feel.playerPosition) > 0.005) {
-      movementResponseMs = Date.now() - movementStart;
-    }
   }
+  const movementResponseMs = await movementProbe;
   await sendCdp('Input.dispatchKeyEvent', { type: 'keyUp', ...movementParams });
 
   const releaseObserved = await observePlaytestState(sendCdp);
@@ -210,20 +246,14 @@ async function runContinuousGameFeelScenario(sendCdp) {
   const attackStartState = feelState(await observePlaytestState(sendCdp)) || stoppedState;
   const attackStartCount = attackStartState?.attackCount ?? 0;
   const attackParams = keyParams({ key: ' ', code: 'Space', keyCode: 32 });
-  let attackResponseMs = null;
+  const attackProbe = startBrowserFeelResponseProbe(sendCdp, {
+    kind: 'attack',
+    baseline: { attackCount: attackStartCount },
+  });
   await sendCdp('Input.dispatchKeyEvent', { type: 'keyDown', ...attackParams });
-  // Start the product-response clock only after keyDown dispatch has completed.
-  // Observe attack feedback before keyUp so CDP release latency cannot inflate the metric.
-  const attackStart = Date.now();
-  for (let i = 0; i < 12; i++) {
-    await new Promise(resolve => setTimeout(resolve, 25));
-    const feel = feelState(await observePlaytestState(sendCdp));
-    if (feel && feel.attackCount > attackStartCount) {
-      attackResponseMs = Date.now() - attackStart;
-      break;
-    }
-  }
+  await new Promise(resolve => setTimeout(resolve, 35));
   await sendCdp('Input.dispatchKeyEvent', { type: 'keyUp', ...attackParams });
+  const attackResponseMs = await attackProbe;
 
   const frameTimesMs = await stopFrameSampler(sendCdp);
   return {
