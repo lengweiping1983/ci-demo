@@ -1,31 +1,32 @@
-# JEV // Neon Arena
+# NEON TACTICS — RootAgent + JEV 3D Game
 
-一个由 RootAgent 约束开发的浏览器 3D 竞技场游戏。
+这是一次 **RootAgent 真正驱动开发** 的产物。任务契约在代码生成前由 RootAgent 冻结，游戏随后按 Maker Context 实现，再由 RootAgent 进行真实 Headless Playtest、Outcome Contract、Checker、Receipt 与 Audit Seal 验证。
 
-## 操作
-- WASD：移动
-- 鼠标：瞄准
-- 左键 / Space：射击
-- Shift：闪避
+## 玩什么
 
-## JEV 决策
-敌方战术指挥器只允许从以下动作中选择：
-- CHASE
-- STRAFE
-- RETREAT
-- ATTACK
-- GUARD
+- **WASD**：移动
+- **Space / 鼠标点击**：射击
+- **Shift**：闪避
+- 敌人战术严格限制在 **CHASE / STRAFE / RETREAT / ATTACK / GUARD**
+- JEV 在线时由 System One Choice 选择战术；网络、额度或 Key 不可用时自动切换本地 fallback，主循环不阻塞
+- 真实 WebGL 3D、Web Audio、粒子反馈、HP / Score / Wave / Game Over / Restart
 
-页面允许玩家在当前会话中临时输入 JEV API Key。Key 仅保存在 JavaScript 内存中，不写入 localStorage、仓库或 GitHub Pages 产物。JEV 调用失败或浏览器 CORS 不允许时，会自动切换到本地 fallback 策略。
+## 安全使用 JEV
 
-## RootAgent 可观测接口
-游戏暴露：
+仓库 **不保存任何真实 API Key**。
 
-```js
-window.__ROOTAGENT_PLAYTEST__.observe()
+推荐本地方式：
+
+```bash
+JEV_API_KEY="<your-key>" node server.mjs
 ```
 
-返回 HP、分数、波次、敌人数、最近敌人距离、玩家位置、当前战术和 AI 模式，供最新 RootAgent Headless Playtest 读取动作前后状态。
+打开 http://localhost:4173 后点击 **Local Proxy**。Key 只存在于 Node 进程环境。
 
-## 部署
-main 分支由 `.github/workflows/deploy-pages.yml` 自动发布到 GitHub Pages。
+页面也提供 **Direct JEV** 输入框用于临时浏览器会话调试；输入值只保存在当前页面内存，不写入 localStorage/sessionStorage/仓库。是否可直接请求取决于服务端 CORS 策略。
+
+GitHub Pages 可以直接运行游戏和 fallback 模式，但静态 Pages 无法安全保存服务端密钥。
+
+## RootAgent 运行时契约
+
+`window.__ROOTAGENT_PLAYTEST__.observe()` 暴露只读状态、Journey 与 Outcome。Outcome criterion IDs 来自开发前冻结的 RootAgent Maker Context，而不是游戏自行发明。

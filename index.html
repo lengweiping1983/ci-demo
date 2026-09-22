@@ -1,68 +1,50 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>JEV // Neon Arena</title>
-  <meta name="description" content="RootAgent 开发的 JEV 决策 3D 竞技场游戏" />
-  <link rel="stylesheet" href="./styles.css" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>NEON TACTICS · JEV 3D Arena</title>
+  <style>
+    :root{color-scheme:dark;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#030611;color:#eef8ff}
+    body:before{content:"";position:fixed;inset:0;background:radial-gradient(circle at 20% 15%,#17345f55,transparent 35%),radial-gradient(circle at 80% 75%,#471b6655,transparent 38%);pointer-events:none}
+    canvas{display:block;width:100vw;height:100vh;cursor:crosshair}
+    #hud{position:fixed;inset:0;pointer-events:none;padding:20px;display:flex;flex-direction:column;justify-content:space-between}
+    .row{display:flex;gap:12px;align-items:flex-start;justify-content:space-between}.panel{background:#07111ecc;border:1px solid #72d7ff33;box-shadow:0 18px 60px #0008,inset 0 0 30px #65d4ff08;backdrop-filter:blur(14px);border-radius:16px;padding:12px 14px}
+    .brand{font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:#8fe5ff}.brand b{font-size:18px;letter-spacing:.12em;color:white;display:block;margin-top:3px}
+    .stats{display:flex;gap:18px}.stat small{display:block;color:#8ea8bb;font-size:10px;letter-spacing:.14em;text-transform:uppercase}.stat strong{font-size:20px}
+    #hpbar{width:180px;height:7px;background:#172331;border-radius:99px;overflow:hidden;margin-top:8px}#hpfill{height:100%;background:linear-gradient(90deg,#4fffc1,#78d6ff);transition:width .15s}
+    #tactic{min-width:220px}.tactic-name{font-size:18px;font-weight:800;letter-spacing:.12em}.source{font-size:11px;color:#9fb3c7;margin-top:4px}
+    .bottom{display:flex;gap:12px;align-items:flex-end}.help{max-width:560px;color:#b9c9d8;font-size:12px;line-height:1.7}.key{display:inline-grid;place-items:center;min-width:23px;height:23px;padding:0 6px;margin:0 2px;border:1px solid #8ee6ff44;border-bottom-color:#8ee6ff88;border-radius:6px;background:#0b1926;color:#dff9ff;font-weight:700}
+    #connect{pointer-events:auto;display:flex;gap:8px;align-items:center}.secret{width:220px;border:1px solid #6bdcff38;background:#020913cc;color:#eafaff;border-radius:10px;padding:9px 11px;outline:none}.secret:focus{border-color:#6bdcffaa}.btn{border:1px solid #71ddff66;background:linear-gradient(180deg,#17354a,#0a1b29);color:white;border-radius:10px;padding:9px 12px;font-weight:700;cursor:pointer}.btn:hover{filter:brightness(1.2)}
+    #message{position:fixed;left:50%;top:19%;transform:translateX(-50%);font-weight:900;font-size:clamp(20px,4vw,42px);letter-spacing:.1em;text-shadow:0 0 35px #62ddff;opacity:0;transition:opacity .25s;pointer-events:none;text-align:center}
+    #gameover{position:fixed;inset:0;display:none;place-items:center;background:#01040abd;backdrop-filter:blur(8px);pointer-events:auto}.card{width:min(430px,90vw);text-align:center;padding:36px;border:1px solid #77e5ff44;border-radius:22px;background:#07121fee;box-shadow:0 30px 100px #000}.card h1{letter-spacing:.15em}.card p{color:#aac0d0}
+    @media(max-width:760px){#hud{padding:10px}.row{gap:8px}.stats{gap:9px;flex-wrap:wrap}.panel{padding:9px 10px}.secret{width:150px}.bottom{flex-direction:column;align-items:stretch}.help{display:none}}
+  </style>
 </head>
 <body>
-  <div id="game"></div>
-
-  <div class="hud">
-    <div class="brand">
-      <div class="eyebrow">ROOTAGENT PLAYABLE SLICE</div>
-      <div class="title">JEV // NEON ARENA</div>
-    </div>
-
-    <div class="stats">
-      <div><span>HP</span><strong id="hp">100</strong></div>
-      <div><span>WAVE</span><strong id="wave">1</strong></div>
-      <div><span>SCORE</span><strong id="score">0000</strong></div>
-    </div>
-
-    <div class="ai-panel">
-      <div class="ai-row">
-        <span class="dot" id="aiDot"></span>
-        <strong id="aiMode">LOCAL FALLBACK</strong>
+  <canvas id="game" aria-label="JEV driven 3D arena"></canvas>
+  <div id="hud">
+    <div class="row">
+      <div class="panel brand">ROOTAGENT PRODUCT<b>NEON TACTICS</b></div>
+      <div class="panel stats">
+        <div class="stat"><small>HP</small><strong id="hp">100</strong><div id="hpbar"><div id="hpfill"></div></div></div>
+        <div class="stat"><small>Score</small><strong id="score">0</strong></div>
+        <div class="stat"><small>Wave</small><strong id="wave">1</strong></div>
       </div>
-      <div class="decision" id="decision">TACTIC: CHASE</div>
-      <div class="confidence" id="confidence">confidence —</div>
+      <div class="panel" id="tactic"><div class="brand">ENEMY DIRECTOR</div><div class="tactic-name" id="tacticName">GUARD</div><div class="source" id="jevSource">Local fallback ready</div></div>
     </div>
-
-    <div class="crosshair" aria-hidden="true"></div>
-    <div class="tips">WASD 移动 · 鼠标瞄准 · 点击 / Space 射击 · Shift 闪避</div>
+    <div class="bottom">
+      <div class="panel help"><span class="key">WASD</span> 移动　<span class="key">SPACE</span> / 鼠标 射击　<span class="key">SHIFT</span> 闪避<br>JEV 只在 <b>CHASE / STRAFE / RETREAT / ATTACK / GUARD</b> 中选择敌方战术；网络失败自动降级。</div>
+      <div class="panel" id="connect">
+        <input id="jevKey" class="secret" type="password" autocomplete="off" placeholder="临时 JEV Key（仅内存）">
+        <button id="directBtn" class="btn">Direct JEV</button>
+        <button id="proxyBtn" class="btn">Local Proxy</button>
+      </div>
+    </div>
   </div>
-
-  <section class="start-card" id="startCard">
-    <div class="chip">3D · JEV DECISION · ROOTAGENT VALIDATED</div>
-    <h1>让敌人<br><em>自己决定怎么围猎你</em></h1>
-    <p>
-      敌方战术指挥器会在 <b>CHASE / FLANK / RETREAT / ATTACK / GUARD</b>
-      中做受约束决策。可选填写 JEV API Key 启用在线决策；不填写也可直接玩，
-      游戏会自动使用本地策略作为安全降级。
-    </p>
-
-    <label for="jevKey">JEV API Key（仅保存在当前页面内存，不写入仓库或本地存储）</label>
-    <input id="jevKey" type="password" autocomplete="off" placeholder="可留空，直接使用本地 fallback" />
-    <div class="start-actions">
-      <button id="startBtn">开始战斗</button>
-      <button class="secondary" id="startFallbackBtn">不使用 Key，直接试玩</button>
-    </div>
-
-    <div class="privacy-note">
-      GitHub Pages 是静态站点，本页不会硬编码任何 API Key。浏览器直连 JEV 若被网络/CORS 阻断，会自动切回本地策略。
-    </div>
-  </section>
-
-  <section class="game-over hidden" id="gameOver">
-    <div class="eyebrow">RUN TERMINATED</div>
-    <h2>信号熄灭</h2>
-    <p>最终得分 <strong id="finalScore">0</strong></p>
-    <button id="restartBtn">重新接入</button>
-  </section>
-
+  <div id="message"></div>
+  <div id="gameover"><div class="card"><div class="brand">RUN TERMINATED</div><h1>CORE OFFLINE</h1><p id="finalScore"></p><button id="restartBtn" class="btn">RESTART ARENA</button></div></div>
   <script type="module" src="./game.js"></script>
 </body>
 </html>
